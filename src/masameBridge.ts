@@ -24,6 +24,12 @@ async function invoke(cmd: string, args: Record<string, unknown> = {}): Promise<
 
   // Engine analysis: forward to local Python KataGo bridge
   if (cmd === 'engine_analyze') {
+    const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    if (!isLocalHost) {
+      // Remote web demo (e.g. GitHub Pages): gracefully inform user without triggering Chrome PNA popups
+      throw { code: 'web_preview_no_ai' }
+    }
+
     const query = (args.query ?? args) as Record<string, unknown>
     try {
       const resp = await fetch('http://127.0.0.1:8765/analyze', {
@@ -36,8 +42,8 @@ async function invoke(cmd: string, args: Record<string, unknown> = {}): Promise<
       }
       return await resp.json()
     } catch (err) {
-      console.error('KataGo analyze bridge error:', err)
-      throw { code: 'engine_stopped', detail: String(err) }
+      console.warn('KataGo bridge unreachable on localhost:', err)
+      throw { code: 'bridge_offline' }
     }
   }
 
@@ -49,7 +55,10 @@ async function invoke(cmd: string, args: Record<string, unknown> = {}): Promise<
     return null
   }
   if (cmd === 'engine_log_tail') {
-    return 'Masame 0.7.0 · Windows OpenCL (AMD Radeon 780M) · Engine Ready'
+    const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    return isLocalHost
+      ? 'Super Craft Go · Local KataGo GTP Bridge Ready'
+      : 'Super Craft Go · Web Preview Mode (Offline 3D Board Active · Full AI in Desktop App)'
   }
 
   // Networks management

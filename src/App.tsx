@@ -1661,7 +1661,7 @@ export function App() {
                         : sub && <div className="sub">{sub}</div>}
                     </div>
                     <span className="cap" role="img" aria-label={t.captures(n)}>{n}</span>
-                    <span className="wm" aria-hidden="true">{c === 1 ? '黒' : '白'}</span>
+                    <span className="wm" aria-hidden="true">{c === 1 ? t.wmBlack : t.wmWhite}</span>
                   </div>
                 )
               })}

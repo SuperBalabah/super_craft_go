@@ -98,6 +98,30 @@ masame/
 
 ---
 
-## 📄 開源授權
+## 💻 系統與硬體配置建議 (Hardware Requirements)
+
+若需在本地端體驗完整的 GPU 加速 AI 算力：
+
+| 項目 | 最低配置要求 | 建議流暢配置 |
+| :--- | :--- | :--- |
+| **顯示卡 (GPU)** | 支援 OpenCL 1.2 之內顯 (如 Intel Iris Xe / AMD Radeon 680M+) | NVIDIA GeForce RTX 系列 (支援 CUDA / TensorRT) 或 AMD Radeon 獨顯 |
+| **處理器 (CPU)** | 支援 AVX2 指令集之 x86-64 處理器 | Intel Core i5/i7 (8代以上) 或 AMD Ryzen 5000 系列以上 |
+| **記憶體 (RAM)** | 8 GB 系統記憶體 | 16 GB DDR4/DDR5 以上 |
+| **硬碟空間** | 1.5 GB 可用空間（含神經網路模型） | 固態硬碟 (SSD) |
+| **作業系統** | Windows 10/11 (64-bit)、macOS 12+ (Apple Silicon) 或 Linux | Windows 11 / macOS (M系列晶片) |
+
+> [!NOTE]
+> **線上免安裝模式 (GitHub Pages)**：
+> 網頁版為 100% 純前端靜態運作，提供完整的 Three.js 3D 視覺渲染、物理落子音效、雙人對弈、SGF 棋譜庫瀏覽與和室光影切換，無須在本機安裝任何環境或啟動 GPU KataGo 後端。深度 MCTS 復盤與高段位神經網路對弈則在桌面版模式下完整啟動。
+
+---
+
+## 📄 開源授權與學術致謝 (License & Attribution)
 
 本專案採用 [MIT License](LICENSE) 開源授權條款。
+
+### 致謝與原創標註
+- **3D 原創引擎**：底層 3D 棋盤渲染架構奠基於 **Sylvain Rey** 打造之開源專案 ([Masame](https://github.com/Slymaster/masame))。
+- **系統整合與功能擴充**：由 **SuperBalabah** 主導開發，包含 Python GTP 非同步通訊橋接微服務 (`bridge.py`)、即時向量 SVG 勝率走勢圖 (`WinrateChart.tsx`)、傳統黑白點目算地系統、中英對稱雙語國際化架構與桌面應用封裝。
+- **神經網路模型**：採用 David J. Wu 主導之 [KataGo](https://github.com/lightvector/KataGo) 深度學習引擎。
+

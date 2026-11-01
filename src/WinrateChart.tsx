@@ -30,17 +30,17 @@ interface Point {
   y: number
 }
 
-const CAT_LABELS: Record<Cat, { name: string; color: string; bg: string }> = {
-  brilliant: { name: '妙手', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.2)' },
-  great: { name: '好手', color: '#34d399', bg: 'rgba(52, 211, 153, 0.2)' },
-  best: { name: '最佳', color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' },
-  excellent: { name: '極佳', color: '#818cf8', bg: 'rgba(129, 140, 248, 0.15)' },
-  good: { name: '正著', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)' },
-  book: { name: '定石', color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' },
-  inaccuracy: { name: '緩手', color: '#fb923c', bg: 'rgba(251, 146, 60, 0.2)' },
-  mistake: { name: '失著', color: '#f87171', bg: 'rgba(248, 113, 113, 0.2)' },
-  miss: { name: '錯失良機', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)' },
-  blunder: { name: '大惡手', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.25)' },
+const CAT_STYLES: Record<Cat, { color: string; bg: string }> = {
+  brilliant: { color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.2)' },
+  great: { color: '#34d399', bg: 'rgba(52, 211, 153, 0.2)' },
+  best: { color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)' },
+  excellent: { color: '#818cf8', bg: 'rgba(129, 140, 248, 0.15)' },
+  good: { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)' },
+  book: { color: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' },
+  inaccuracy: { color: '#fb923c', bg: 'rgba(251, 146, 60, 0.2)' },
+  mistake: { color: '#f87171', bg: 'rgba(248, 113, 113, 0.2)' },
+  miss: { color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.2)' },
+  blunder: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.25)' },
 }
 
 export function WinrateChart({ game, cursor, judged, pos, go, onReview, canReview, reading, pct }: WinrateChartProps) {
@@ -150,7 +150,7 @@ export function WinrateChart({ game, cursor, judged, pos, go, onReview, canRevie
           {displayPoint && (
             <span className="fox-cur-move">
               <span className={`fox-stone-icon ${displayPoint.sign === 1 ? 'b' : 'w'}`} />
-              第 {displayPoint.moveNumber} 手 · {displayPoint.coord}
+              {t.chartMove(displayPoint.moveNumber, displayPoint.coord)}
             </span>
           )}
         </div>
@@ -158,16 +158,16 @@ export function WinrateChart({ game, cursor, judged, pos, go, onReview, canRevie
           {displayPoint && (
             <>
               <span className="fox-lead-stat">
-                黑勝率 <strong style={{ color: displayPoint.w >= 50 ? '#38bdf8' : '#cbd5e1' }}>{displayPoint.w.toFixed(1)}%</strong>
+                {t.chartWinrate} <strong style={{ color: displayPoint.w >= 50 ? '#38bdf8' : '#cbd5e1' }}>{displayPoint.w.toFixed(1)}%</strong>
               </span>
               {typeof displayPoint.lead === 'number' && (
                 <span className="fox-lead-diff">
-                  {displayPoint.lead >= 0 ? `黑+${displayPoint.lead.toFixed(1)}目` : `白+${Math.abs(displayPoint.lead).toFixed(1)}目`}
+                  {displayPoint.lead >= 0 ? t.chartLeadB(displayPoint.lead.toFixed(1)) : t.chartLeadW(Math.abs(displayPoint.lead).toFixed(1))}
                 </span>
               )}
-              {displayPoint.cat && CAT_LABELS[displayPoint.cat] && (
-                <span className="fox-cat-tag" style={{ color: CAT_LABELS[displayPoint.cat].color, background: CAT_LABELS[displayPoint.cat].bg }}>
-                  {CAT_LABELS[displayPoint.cat].name}
+              {displayPoint.cat && CAT_STYLES[displayPoint.cat] && (
+                <span className="fox-cat-tag" style={{ color: CAT_STYLES[displayPoint.cat].color, background: CAT_STYLES[displayPoint.cat].bg }}>
+                  {t.cats[displayPoint.cat]}
                   {typeof displayPoint.loss === 'number' && displayPoint.loss >= 1 ? ` -${displayPoint.loss.toFixed(1)}` : ''}
                 </span>
               )}
@@ -300,17 +300,17 @@ export function WinrateChart({ game, cursor, judged, pos, go, onReview, canRevie
           <div className="fox-empty-overlay">
             {reading ? (
               <div className="fox-reading-bar">
-                <span>KataGo 深度復盤演算中 {pct !== undefined ? `${Math.round(pct * 100)}%` : '…'}</span>
+                <span>{t.chartAnalyzing(pct !== undefined ? `${Math.round(pct * 100)}%` : undefined)}</span>
                 <div className="fox-progress-track">
                   <div className="fox-progress-fill" style={{ width: `${Math.round((pct ?? 0) * 100)}%` }} />
                 </div>
               </div>
             ) : (
               <div className="fox-empty-prompt">
-                <span>尚無勝率資料</span>
+                <span>{typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? t.chartWebPreviewHint : t.chartNoData}</span>
                 {canReview && onReview && (
                   <button className="fox-review-btn" onClick={onReview}>
-                    啟動復盤以生成勝率曲線
+                    {t.chartStartReview}
                   </button>
                 )}
               </div>

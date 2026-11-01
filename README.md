@@ -104,6 +104,29 @@ masame/
 
 ---
 
-## 📄 License
+## 💻 System & Hardware Requirements
 
-Open-source licensed under the [MIT License](LICENSE).
+For running the full local AI engine with GPU acceleration:
+
+| Component | Minimum Specification | Recommended Specification |
+| :--- | :--- | :--- |
+| **GPU** | Integrated GPU with OpenCL 1.2 support | NVIDIA GeForce RTX series (CUDA / TensorRT) or AMD Radeon (OpenCL) |
+| **CPU** | x86-64 processor with AVX2 instruction set | Intel Core i5/i7 (8th Gen+) or AMD Ryzen 5000+ |
+| **RAM** | 8 GB System Memory | 16 GB DDR4/DDR5 |
+| **Storage** | 1.5 GB available space (including KataGo neural net models) | SSD Storage |
+| **Operating System** | Windows 10/11 (64-bit), macOS 12+ (Apple Silicon), or Linux | Windows 11 / macOS (M1/M2/M3) |
+
+> [!NOTE]
+> **Web Preview Mode (GitHub Pages)**:
+> The online web version runs 100% client-side in the browser, featuring full Three.js 3D rendering, tactile stone acoustics, two-player matches, SGF library viewing, and lighting themes without requiring any local installation or GPU KataGo backend. Deep MCTS KataGo analysis and humanoid neural networks are activated in the desktop application mode.
+
+---
+
+## 📄 License & Academic Attribution
+
+This project is open-source under the [MIT License](LICENSE).
+
+### Acknowledgements & Attribution
+- **Original 3D Engine**: Built upon the exquisite Three.js 3D Go Goban rendering engine created by **Sylvain Rey** ([Masame](https://github.com/Slymaster/masame)).
+- **System Architecture & Enhancements**: Engineered by **SuperBalabah** — including the asynchronous Python GTP KataGo microservice (`bridge.py`), interactive SVG winrate timeline (`WinrateChart.tsx`), classical territory flood-fill scoring HUD, symmetrical bilingual localization (EN/ZH), and native desktop orchestration.
+- **AI Neural Networks**: Powered by [KataGo](https://github.com/lightvector/KataGo) by David J. Wu.
