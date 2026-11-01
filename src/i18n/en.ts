@@ -287,7 +287,7 @@ export const en = {
   chartStartReview: 'Analyze Game with AI',
   chartWebPreviewHint: 'Web Preview: Full AI available in Desktop App',
   webPreviewNoAi: 'Web Preview Mode: Offline 3D Board active. Download Desktop App for KataGo AI.',
-  bridgeOffline: 'Local KataGo bridge not running. Run start_gorealm.bat to launch AI.',
+  bridgeOffline: 'Local KataGo AI engine is warming up or not ready. Please wait a moment and click "Try again".',
   wmBlack: 'B',
   wmWhite: 'W',
   reportNext: (cat: string) => `Next: ${cat}`,
@@ -635,7 +635,7 @@ export const en = {
     ogs_offline: 'Not connected to OGS.',
     ogs_refused: 'OGS refused this move.',
     web_preview_no_ai: 'Web Preview Mode: Offline 3D Board active. Download Desktop App for GPU KataGo AI analysis.',
-    bridge_offline: 'Local KataGo bridge not running. Run start_gorealm.bat to start AI.',
+    bridge_offline: 'Local KataGo AI engine is warming up or not ready. Please wait a moment and click "Try again".',
   },
 }
 

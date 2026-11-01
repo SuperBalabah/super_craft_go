@@ -289,7 +289,7 @@ export const zh = {
   chartStartReview: '啟動復盤以生成勝率曲線',
   chartWebPreviewHint: '線上預覽模式：桌面版支援完整 AI 復盤',
   webPreviewNoAi: '線上預覽模式：3D 棋盤與打譜功能已就緒。如需 GPU 深度復盤請下載本機桌面版。',
-  bridgeOffline: '本地 KataGo 引擎未啟動。請執行 start_gorealm.bat 啟動 AI。',
+  bridgeOffline: '本地 KataGo AI 引擎正在初始化或未就緒，請稍候片刻後點擊「再試一次」。',
   wmBlack: '黒',
   wmWhite: '白',
   reportNext: (cat: string) => `下一處：${cat}`,
@@ -615,6 +615,6 @@ export const zh = {
     ogs_offline: '尚未連線至 OGS 網路。',
     ogs_refused: 'OGS 拒絕了這手棋。',
     web_preview_no_ai: '線上預覽模式：3D 棋盤與打譜功能已就緒。如需 GPU 深度復盤與 AI 對弈，請下載本機桌面版。',
-    bridge_offline: '本地 KataGo 引擎未啟動。請執行 start_gorealm.bat 啟動 AI 引擎。',
+    bridge_offline: '本地 KataGo AI 引擎正在初始化或未就緒，請稍候片刻後點擊「再試一次」。',
   },
 }

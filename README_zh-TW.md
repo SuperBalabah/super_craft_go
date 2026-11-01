@@ -49,7 +49,14 @@
 
 ## 🚀 快速安裝與使用指南 (Quick Start)
 
-### 方式一：下載官方桌面安裝包（最推薦 · 滿血 GPU AI）
+### 方式一：下載官方桌面安裝包（推薦 Windows 10/11 64 位元）
+
+> [!IMPORTANT]
+> **本安裝包僅支援 Windows 系統**：
+> 官方獨立免安裝綠色包（`Super-Craft-Go-v1.0.0-Windows-x64.zip`）專為 **Windows 10 / 11 (64 位元)** 與 OpenCL GPU 加速編譯。
+> 
+> **Mac / Linux 使用者**：請直接點選下方的 **方式二：線上免安裝預覽 (Web Instant Preview)**，各作業系統與瀏覽器均可 100% 流暢體驗 3D 棋盤與打譜功能！
+
 無需安裝 Node.js、Vite 或 Python，開箱即用：
 
 1. **下載安裝包**：前往 GitHub Releases 下載最新版 [`Super-Craft-Go-v1.0.0-Windows-x64.zip`](https://github.com/SuperBalabah/super_craft_go/releases/latest)。
@@ -117,7 +124,7 @@ masame/
 | **處理器 (CPU)** | 支援 AVX2 指令集之 x86-64 處理器 | Intel Core i5/i7 (8代以上) 或 AMD Ryzen 5000 系列以上 |
 | **記憶體 (RAM)** | 8 GB 系統記憶體 | 16 GB DDR4/DDR5 以上 |
 | **硬碟空間** | 1.5 GB 可用空間（含神經網路模型） | 固態硬碟 (SSD) |
-| **作業系統** | Windows 10/11 (64-bit)、macOS 12+ (Apple Silicon) 或 Linux | Windows 11 / macOS (M系列晶片) |
+| **作業系統** | Windows 10/11 (64 位元) 桌面專用；Mac / Linux 使用者推薦使用線上預覽版 | Windows 11 (64 位元) / macOS (M 系列晶片) |
 
 > [!NOTE]
 > **線上免安裝模式 (GitHub Pages)**：

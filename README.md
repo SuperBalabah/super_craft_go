@@ -55,7 +55,14 @@ Designed for serious Go players and connoisseurs, GoRealm features authentic Jap
 
 ## 🚀 Quick Start & Installation
 
-### Option 1: Desktop Application with Full GPU AI (Recommended)
+### Option 1: Desktop Application with Full GPU AI (Recommended for Windows)
+
+> [!IMPORTANT]
+> **Windows Only for Standalone Package**:
+> The one-click standalone executable package (`Super-Craft-Go-v1.0.0-Windows-x64.zip`) is specifically built for **Windows 10 / 11 (64-bit)** with OpenCL/DirectX GPU acceleration.
+> 
+> **macOS & Linux users**: Please use **Option 2: Web Browser Instant Preview**, which runs smoothly across all platforms and operating systems with zero installation.
+
 Download the standalone, pre-configured desktop package with zero runtime dependencies (no Node.js or Python required):
 
 1. **Download Release**: Grab the latest [`Super-Craft-Go-v1.0.0-Windows-x64.zip`](https://github.com/SuperBalabah/super_craft_go/releases/latest) from GitHub Releases.
@@ -123,7 +130,7 @@ For running the full local AI engine with GPU acceleration:
 | **CPU** | x86-64 processor with AVX2 instruction set | Intel Core i5/i7 (8th Gen+) or AMD Ryzen 5000+ |
 | **RAM** | 8 GB System Memory | 16 GB DDR4/DDR5 |
 | **Storage** | 1.5 GB available space (including KataGo neural net models) | SSD Storage |
-| **Operating System** | Windows 10/11 (64-bit), macOS 12+ (Apple Silicon), or Linux | Windows 11 / macOS (M1/M2/M3) |
+| **Operating System** | Windows 10/11 (64-bit) for Desktop App; macOS 12+ / Linux for Web Preview | Windows 11 (64-bit) / macOS (M1/M2/M3) |
 
 > [!NOTE]
 > **Web Preview Mode (GitHub Pages)**:
