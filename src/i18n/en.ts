@@ -191,7 +191,7 @@ export const en = {
   settingsOgs: (who: string) => `OGS · Signed in: ${who}`,
   // macOS menu bar (src-tauri/src/menu.rs)
   menu: {
-    about: 'About Masame', hide: 'Hide Masame', hideOthers: 'Hide Others', showAll: 'Show All', quit: 'Quit Masame',
+    about: 'About GoRealm', hide: 'Hide GoRealm', hideOthers: 'Hide Others', showAll: 'Show All', quit: 'Quit GoRealm',
     file: 'File', newGame: 'New Game', position: 'From a Position…', open: 'Import an SGF…', save: 'Save…', postcard: 'Postcard…', kifu: 'Kifu…',
     edit: 'Edit', undoMove: 'Undo Move', copy: 'Copy', selectAll: 'Select All',
     game: 'Game', pass: 'Pass', resign: 'Resign', territory: 'Light and Shadow', review: 'Review the Game', memory: 'Replay from Memory',
@@ -201,13 +201,18 @@ export const en = {
   },
   // games against the bot
   botName: (rank: string) => `KataGo human ${rank}`,
+  superhumanName: 'KataGo Superhuman AI',
+  superhumanDesc: 'Unrestricted superhuman model with peak compute',
   resigns: (loser: number) => `${color(loser)} resigns. ${color(-loser)} wins.`,
   botFailed: (m: string) => `The AI can’t play right now. ${m}`,
   retry: 'Try again',
   humanSilent: 'The Human network isn’t responding. Check that it’s installed.',
   badAnswer: 'Unreadable answer from KataGo.',
   // Masters of an era and the Mentor (v0.5, B)
-  style: 'Style', styleLevel: 'At your level', styleEra: 'Master of an era',
+  style: 'Style', styleLevel: 'At your level', styleEra: 'Master of an era', styleSuperhuman: 'Superhuman AI',
+  aiThinkingTime: 'AI Thinking Depth',
+  livePonderingTitle: 'AI Live Candidates Stream',
+  livePonderingHelp: 'Deepens search dynamically on current position during review',
   era: 'Era', earlier: 'Era: earlier', later: 'Era: later',
   masterOf: (year: number) => `Master of ${year}`,
   eraHelp: 'These masters play at professional strength: auto-adjust is paused during these games.',
@@ -272,6 +277,7 @@ export const en = {
   catHead: (mv: number, cat: string, loss: number) => `Move ${mv} · ${cat}${Math.round(loss * 10) ? ` · −${pts(loss)}` : ''}`,
   report: 'Game report', accuracy: 'Accuracy', accuracyOf: (a: number | null) => (a === null ? '—' : `${f.num(Math.round(a * 10) / 10)}%`),
   reportHelp: 'Choose a move: the marks on the timeline lead to the telling ones.',
+  chartTitle: 'AI Winrate Chart',
   reportNext: (cat: string) => `Next: ${cat}`,
   pvShow: 'KataGo’s line', pvHide: 'Hide the line',
   retryMove: 'Retry', toReport: 'Back to the report', keyMoments: 'Key moments', notableMoves: 'Notable moves',

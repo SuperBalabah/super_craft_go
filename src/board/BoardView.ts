@@ -208,24 +208,41 @@ function deadHint(c: CanvasRenderingContext2D, g: Geom, own: number[], signMap: 
   }))
 }
 
-/** Counting: dead stones fade into the wood; counted points get a tiny slate or shell square (on dead stones too). */
+/** Counting: 傳統圍棋黑白實地標記 (參考 oro圍棋/弈城)：黑地純黑實心方塊，白地純白方框，死子淡化清晰標記 */
 function countMarks(c: CanvasRenderingContext2D, g: Geom, signMap: SignMap, { dead, territory }: NonNullable<BoardState['counting']>, at: At) {
-  const q = Math.max(4, g.cell * 0.28)
+  const q = Math.max(5, Math.round(g.cell * 0.32))
   signMap.forEach((row, Y) => row.forEach((s, X) => {
     const [cx, cy] = at(X, Y)
     if (s && dead[Y][X]) {
-      c.fillStyle = 'rgba(212,168,104,0.62)'
+      // 死子標記：半透明遮罩與內嵌方塊
+      c.save()
+      c.fillStyle = 'rgba(212,168,104,0.65)'
       c.beginPath(); c.arc(cx, cy, g.r * 1.02, 0, TAU); c.fill()
+      c.strokeStyle = s === 1 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)'
+      c.lineWidth = 1.4
+      c.strokeRect(Math.round(cx - q / 2), Math.round(cy - q / 2), q, q)
+      c.restore()
+      return
     }
     const o = territory[Y][X]
     if (!o) return
     c.save()
-    c.shadowColor = 'rgba(48,26,6,0.35)'; c.shadowBlur = q * 0.35; c.shadowOffsetX = q * 0.06; c.shadowOffsetY = q * 0.1
-    c.fillStyle = o === 1 ? '#2a2a2f' : '#f4efe4'
-    c.fillRect(cx - q / 2, cy - q / 2, q, q)
+    if (o === 1) {
+      // 黑地：傳統純黑實心方塊 (■)
+      c.fillStyle = '#09090b'
+      c.fillRect(Math.round(cx - q / 2), Math.round(cy - q / 2), q, q)
+      c.strokeStyle = '#27272a'
+      c.lineWidth = 0.75
+      c.strokeRect(Math.round(cx - q / 2), Math.round(cy - q / 2), q, q)
+    } else {
+      // 白地：傳統純白方塊 (□)，帶有精緻外深邊框
+      c.fillStyle = '#ffffff'
+      c.fillRect(Math.round(cx - q / 2), Math.round(cy - q / 2), q, q)
+      c.strokeStyle = '#18181b'
+      c.lineWidth = 1.2
+      c.strokeRect(Math.round(cx - q / 2), Math.round(cy - q / 2), q, q)
+    }
     c.restore()
-    c.strokeStyle = o === 1 ? 'rgba(12,12,14,0.9)' : 'rgba(110,84,50,0.75)'; c.lineWidth = 0.75
-    c.strokeRect(cx - q / 2, cy - q / 2, q, q)
   }))
 }
 

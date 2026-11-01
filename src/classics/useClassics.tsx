@@ -37,8 +37,8 @@ export function dateText(d: string) {
   const [y, m, day] = d.split('-').map(Number)
   if (!m) return String(y)
   const date = new Date(Date.UTC(y, m - 1, day || 1))
-  const text = new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { year: 'numeric', month: 'long', ...day && { day: 'numeric' }, timeZone: 'UTC' }).format(date)
-  return lang === 'fr' && day === 1 ? text.replace(/^1(?=\s)/, '1er') : text // « 1er décembre 1851 »
+  const text = new Intl.DateTimeFormat(lang === 'zh' ? 'zh-TW' : 'en-GB', { year: 'numeric', month: 'long', ...day && { day: 'numeric' }, timeZone: 'UTC' }).format(date)
+  return text
 }
 /** A game worth guessing: real moves to guess, on a board KataGo reads. */
 export const canGuess = (g: Game) => g.info.size <= 19 && g.moves.filter(m => !m.setup && m.vertex).length >= 10
@@ -162,7 +162,7 @@ export function useClassics({ view, open, setOpen, blocked, canAnalyze, ask, set
             const b = bestOf(c.id)
             return <li key={c.id}>
               <button className="deck-row" onClick={() => pickClassic(c)}>
-                <span className="deck-top"><b>{c.title[lang]}</b><span className="deck-n">{b ? t.clBest(b.found, b.total) : t.clNew}</span></span>
+                <span className="deck-top"><b>{c.title[lang] ?? c.title.en}</b><span className="deck-n">{b ? t.clBest(b.found, b.total) : t.clNew}</span></span>
                 <span className="deck-phrase">{`${c.date.slice(0, 4)} · ${c.black} – ${c.white}`}</span>
               </button>
             </li>
@@ -226,9 +226,9 @@ export function useClassics({ view, open, setOpen, blocked, canAnalyze, ask, set
   const body = (
     <section className="rv cl" aria-label={t.classics}>
       <div className="lab"><span>{t.classics}</span><span>{run.phase === 'setup' ? run.classic ? dateText(run.classic.date) : '' : t.moveOf(Math.min(moveNo, total), total)}</span></div>
-      <p className="state">{run.classic ? run.classic.title[lang] : `${run.black} – ${run.white}`}</p>
+      <p className="state">{run.classic ? (run.classic.title[lang] ?? run.classic.title.en) : `${run.black} – ${run.white}`}</p>
       {run.phase === 'setup' ? <>
-        {run.classic && <p className="quiet">{run.classic.context[lang]}</p>}
+        {run.classic && <p className="quiet">{run.classic.context[lang] ?? run.classic.context.en}</p>}
         <div className="field"><span>{t.clSide}</span><Seg label={t.clSide} value={run.side} options={sides} set={side => setRun({ ...run, side })} /></div>
         <div className="field"><span>{t.clStart}</span>
           <Seg label={t.clStart} value={run.from} options={STARTS.map(s => [s, t.move(s)])} set={from => setRun({ ...run, from, at: startOf(g, from) })} />

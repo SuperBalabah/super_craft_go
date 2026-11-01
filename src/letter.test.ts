@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { en } from './i18n/en'
-import { fr } from './i18n/fr'
+import { zh } from './i18n/zh'
 import type { Event } from './journal'
 import { letterLines, loadCounts, monthFacts, months, type Sources } from './letter'
 import type { Entry } from './library'
 import type { Read } from './rank'
 
-const nb = (s: string) => s.replace(/ /g, ' ')
 const at = (d: number, m = 9, h = 12) => new Date(2026, m, d, h).getTime() // October 2026 by default
 const side = { name: '', rank: '' }
 const entry = (id: string, date: number, source: Entry['source'], me: Entry['me'], result?: string): Entry =>
@@ -53,12 +52,12 @@ describe('the facts of a month', () => {
   })
   it('a month without anything says only so, in both languages', () => {
     const f = monthFacts(2026, 7, fixture)
-    expect(letterLines(f, fr)).toEqual(['Rien ce mois-ci.'])
+    expect(letterLines(f, zh)).toEqual(['本月暫無統計紀錄。'])
     expect(letterLines(f, en)).toEqual(['Nothing this month.'])
   })
   it('a month without a game says only so, whatever else it held', () => {
     const quiet: Sources = { entries: [], played: [], ranks: [], counts: [{ t: at(2), err: 2 }], journal: [ev(at(6), 'tsumego', true, 't1'), ev(at(2, 9, 21), 'ritual', true)] }
-    expect(letterLines(monthFacts(2026, 9, quiet), fr)).toEqual(['Rien ce mois-ci.'])
+    expect(letterLines(monthFacts(2026, 9, quiet), zh)).toEqual(['本月暫無統計紀錄。'])
   })
   it('a game reviewed in October but played in September counts where it was played', () => {
     const late: Sources = { ...fixture, played: [{ k: 'a', t: at(5), loss: [3, 12, 4] }, { k: 'z', t: at(6), d: at(28, 8), loss: [40, 0, 0] }] }
@@ -76,18 +75,18 @@ describe('the facts of a month', () => {
 })
 
 describe('the letter, sentence by sentence', () => {
-  it('says October 2026 in French, one sentence per fact', () => {
-    expect(letterLines(monthFacts(2026, 9, fixture), fr).map(nb)).toEqual([
-      'Tu as joué 6 parties : 4 contre l’IA, 1 sur OGS et 1 à deux.',
-      'Tu as revu une partie venue d’un fichier.',
-      'Contre l’IA, tu as gagné 2 parties sur 3.',
-      'Ton rang lu dans tes coups est passé de 6k à 5k.',
-      'Tes points sont partis surtout en milieu de partie : 10 points par partie.',
-      'Tu as appris 2 nouvelles séquences de joseki.',
-      'Tu as appris un nouveau fuseki.',
-      'Tu as résolu 2 tsumego.',
-      'Tu as compté 3 positions, en général à 3 points près.',
-      'Tu as fait le rituel 5 jours, jusqu’à 3 de suite.',
+  it('says October 2026 in Chinese, one sentence per fact', () => {
+    expect(letterLines(monthFacts(2026, 9, fixture), zh)).toEqual([
+      '您共下了 6 盤棋：包括 與 AI 對弈 4 盤、在 OGS 網棋對戰 1 盤、雙人對局 1 盤。',
+      '您回顧了本機的 1 份歷史棋譜。',
+      '在與 AI 的 3 盤戰鬥中，贏得了 2 場勝利。',
+      '您的 AI 段位從 6k 穩步躍升至 5k！',
+      '您失誤最頻繁的階段是中盤階段：平均每盤失分約 10 目。',
+      '您掌握了 2 個全新定石變化。',
+      '您研習了 1 種大局布局走法。',
+      '您攻克了解答了 2 道實戰死活題。',
+      '您完成了 3 次盤面點目練習，評估通常誤差在 3 目以內。',
+      '您本月共修行 5 天，最高連續堅持 3 天。',
     ])
   })
   it('says it in English', () => {
@@ -104,34 +103,29 @@ describe('the letter, sentence by sentence', () => {
       'You did the ritual on 5 days, up to 3 in a row.',
     ])
   })
-  it('singular and plural', () => {
+  it('singular and plural in Chinese and English', () => {
     const one = { ai: 1, ogs: 0, two: 0, position: 0 }
-    expect(fr.letter.played(one)).toBe('Tu as joué 1 partie contre l’IA.')
+    expect(zh.letter.played(one)).toBe('您與 AI 對弈共下了 1 盤棋。')
     expect(en.letter.played({ ...one, ai: 3 })).toBe('You played 3 games against the AI.')
-    expect(nb(fr.letter.played({ ai: 1, ogs: 1, two: 0, position: 0 }))).toBe('Tu as joué 2 parties : 1 contre l’IA et 1 sur OGS.')
-    expect(fr.letter.files(2)).toBe('Tu as revu 2 parties venues de fichiers.')
-    expect(fr.letter.wins(1, 1)).toBe('Tu as gagné ta partie contre l’IA.')
+    expect(zh.letter.files(2)).toBe('您回顧了本機的 2 份歷史棋譜。')
+    expect(zh.letter.wins(1, 1)).toBe('您在與 AI 的對決中取得勝利。')
     expect(en.letter.wins(0, 1)).toBe('You lost your game against the AI.')
-    expect(fr.letter.wins(1, 4)).toBe('Contre l’IA, tu as gagné 1 partie sur 4.')
-    expect(fr.letter.wins(0, 2)).toBe('Contre l’IA, aucune victoire en 2 parties.')
     expect(en.letter.wins(0, 2)).toBe('Against the AI, no win in 2 games.')
-    expect(fr.letter.rank('5k', '5k')).toBe('Ton rang lu dans tes coups est resté à 5k.')
-    expect(nb(fr.letter.phase(0, 1.2))).toBe('Tes points sont partis surtout dans l’ouverture : 1 point par partie.')
-    expect(fr.letter.joseki(1)).toBe('Tu as appris une nouvelle séquence de joseki.')
+    expect(zh.letter.rank('5k', '5k')).toBe('您的 AI 實戰段位評定穩定在 5k。')
+    expect(zh.letter.joseki(1)).toBe('您掌握了 1 個全新定石變化。')
     expect(en.letter.joseki(1)).toBe('You learned a new joseki sequence.')
-    expect(fr.letter.fuseki(3)).toBe('Tu as appris 3 nouveaux fuseki.')
-    expect(fr.letter.tsumego(1)).toBe('Tu as résolu un tsumego.')
+    expect(zh.letter.fuseki(3)).toBe('您研習了 3 種大局布局走法。')
+    expect(zh.letter.tsumego(1)).toBe('您攻克了解答了 1 道實戰死活題。')
     expect(en.letter.tsumego(1)).toBe('You solved a tsumego.')
-    expect(fr.letter.counting(1, 1)).toBe('Tu as compté une position, à 1 point près.')
     expect(en.letter.counting(4, 0.2)).toBe('You counted 4 positions, usually to the point.')
-    expect(fr.letter.ritual(1, 1)).toBe('Tu as fait le rituel un jour.')
-    expect(fr.letter.ritual(4, 4)).toBe('Tu as fait le rituel 4 jours de suite.')
+    expect(zh.letter.ritual(1, 1)).toBe('您堅持了 1 天的每日修行。')
+    expect(zh.letter.ritual(4, 4)).toBe('您已連續堅持每日修煉達 4 天！')
     expect(en.letter.ritual(3, 1)).toBe('You did the ritual on 3 days.')
   })
   it('titles the month', () => {
-    expect(fr.letter.title(2026, 9)).toBe('Octobre 2026')
+    expect(zh.letter.title(2026, 9)).toBe('2026 年 10 月棋力成長手札')
     expect(en.letter.title(2026, 9)).toBe('October 2026')
-    expect(fr.letter.fileName(2026, 9)).toBe('masame-lettre-2026-10.png')
+    expect(zh.letter.fileName(2026, 9)).toBe('masame-letter-2026-10.png')
   })
 })
 

@@ -9,6 +9,7 @@ const host = process.env.TAURI_DEV_HOST
 
 // Tauri expects a fixed port and must not have its Rust output hidden by Vite.
 export default defineConfig({
+  base: './',
   plugins: [react()],
   // @sabaki/sgf only needs iconv-lite/jschardet to decode legacy-encoded Buffers; we parse strings, so keep ~800 kB out.
   resolve: { alias: { 'iconv-lite': nullModule, jschardet: nullModule } },

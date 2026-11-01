@@ -8,7 +8,7 @@ import { readV1, writeV1 } from '../store'
 export interface Classic {
   id: string; file: string; date: string // "1846-09-11", or "1815" when only the year is known
   black: string; white: string; result: string; moves: number
-  title: { fr: string; en: string }; context: { fr: string; en: string }
+  title: Record<string, string>; context: Record<string, string>
 }
 const base = `${import.meta.env.BASE_URL}assets/classics/`
 let index: Promise<Classic[]> | null = null

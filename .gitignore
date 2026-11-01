@@ -27,3 +27,5 @@ scripts/joseki/.cache/
 *.p8
 *.mobileprovision
 keystore.properties
+
+test-results/

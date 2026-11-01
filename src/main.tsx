@@ -21,7 +21,9 @@ import { App } from './App'
   document.documentElement.style.setProperty('--noise', `url(${c.toDataURL()})`)
 }
 
-// Dev only (stripped from builds): a declarative stand-in for the Tauri bridge, for UI previews (see devMock.ts).
-if (import.meta.env.DEV && sessionStorage.getItem('baduk.devMock')) await import('./devMock')
+// Browser bridge: connect to local KataGo bridge and storage when not inside Tauri desktop shell
+if (!('__TAURI_INTERNALS__' in window)) {
+  await import('./masameBridge')
+}
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)

@@ -8,6 +8,7 @@ const ICONS = {
   'volume-off': <path d="M4 9.5h3l5-4v13l-5-4H4zM16 10l4 4M20 10l-4 4" />,
   view: <><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3.2-3.5 3.2H15a2 2 0 0 0-1.4 3.4A1.5 1.5 0 0 1 12 21z" /><circle cx="7.6" cy="11" r="1" /><circle cx="11" cy="7.4" r="1" /><circle cx="15.6" cy="8.6" r="1" /></>,
   cube: <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />,
+  'view-3d': <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />,
   square: <rect x="5" y="5" width="14" height="14" rx="2" />,
   'chevron-left': <path d="M15 6l-6 6 6 6" />,
   'chevron-right': <path d="M9 6l6 6-6 6" />,

@@ -15,8 +15,8 @@ import type { Moment } from './review'
 import { reviewKey } from './exercises/deck'
 import { loadSgf, saveSgf } from './sgf'
 
-/** The AI of a local game. ritual: the daily 9×9 (never moves the AI level); era, mentor: a Master of an era, the mentor on. */
-export interface Bot { sign: Sign; rank: string; ritual?: true; era?: number; mentor?: true }
+/** The AI of a local game. ritual: the daily 9×9 (never moves the AI level); era, mentor: a Master of an era, the mentor on; superhuman: strongest unconstrained model. */
+export interface Bot { sign: Sign; rank: string; ritual?: true; era?: number; mentor?: true; superhuman?: boolean }
 /** What a write reads: the shown game, its AI, its clock, the player's level (the rank on the player's side). */
 export interface Shown { game: Game; bot: Bot | null; clock: LocalClock | null; myRank: string }
 

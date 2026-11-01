@@ -37,7 +37,7 @@ export async function on<T>(event: string, cb: (payload: T) => void): Promise<()
 const COLS = 'ABCDEFGHJKLMNOPQRSTUVWXYZ'
 export const gtp = ([x, y]: Vertex, n: number) => `${COLS[x]}${n - y}`
 /** A GTP move from the engine: null for a pass, undefined when unreadable or off an n×n board. */
-function vertex(s: unknown, n: number): Vertex | null | undefined {
+export function vertex(s: unknown, n: number): Vertex | null | undefined {
   if (typeof s !== 'string') return undefined
   if (s.toLowerCase() === 'pass') return null
   const x = COLS.indexOf(s[0]), row = s.slice(1)
@@ -110,7 +110,61 @@ export function positionQuery(game: Game) {
   }
 }
 
+export interface CandidateMoveInfo {
+  v: Vertex | null
+  gtpCoord: string
+  label: string
+  rank: number
+  winrate: number // 0..100
+  scoreLead: number // relative to toPlay
+  visits: number
+  pv: Vertex[]
+}
+
+export function extractCandidateDetails(raw: unknown, n: number, toPlay: Sign): CandidateMoveInfo[] {
+  const r = raw as { moveInfos?: any[] }
+  if (!Array.isArray(r?.moveInfos)) return []
+  return r.moveInfos
+    .filter(m => m && typeof m.move === 'string' && m.move.toLowerCase() !== 'pass' && typeof m.visits === 'number' && m.visits > 0)
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+    .slice(0, 5)
+    .map((m, idx) => {
+      const v = vertex(m.move, n) ?? null
+      const pvVertices: Vertex[] = []
+      if (Array.isArray(m.pv)) {
+        for (const s of m.pv) {
+          const pvV = vertex(s, n)
+          if (pvV) pvVertices.push(pvV)
+          else break
+        }
+      }
+      const rawWr = typeof m.winrate === 'number' ? m.winrate : 0.5
+      const sideWr = toPlay === 1 ? rawWr * 100 : (1 - rawWr) * 100
+      const rawLead = typeof m.scoreLead === 'number' ? m.scoreLead : 0
+      const sideLead = toPlay * rawLead
+      return {
+        v,
+        gtpCoord: m.move,
+        label: String(idx + 1),
+        rank: idx + 1,
+        winrate: Math.round(sideWr * 10) / 10,
+        scoreLead: Math.round(sideLead * 10) / 10,
+        visits: m.visits ?? 0,
+        pv: pvVertices,
+      }
+    })
+}
+
 export async function analyze(game: Game, extra: Record<string, unknown>): Promise<Analysis> {
   const n = game.info.size
   return parseAnalysis(await call('engine_analyze', { query: { ...positionQuery(game), ...extra } }), n)
 }
+
+export async function analyzeDetailed(game: Game, extra: Record<string, unknown>): Promise<{ analysis: Analysis; candidates: CandidateMoveInfo[] }> {
+  const n = game.info.size
+  const raw = await call('engine_analyze', { query: { ...positionQuery(game), ...extra } })
+  const analysis = parseAnalysis(raw, n)
+  const candidateList = extractCandidateDetails(raw, n, game.toPlay)
+  return { analysis, candidates: candidateList }
+}
+

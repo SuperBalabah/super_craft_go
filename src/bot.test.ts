@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { rng } from './board/noise'
 import { adjustRank, botProfile, clampEra, decide, entropy, ERAS, humanDistribution, humanProfile, lessonFlags, RANKS, resignFrom, sample, settled, stepEra, stepRank, thinkDelay, type BotInput } from './bot'
 import { en } from './i18n/en'
-import { fr } from './i18n/fr'
+import { zh } from './i18n/zh'
 
 const all = () => true
 const empty = (n: number) => Array.from({ length: n }, () => Array<number>(n).fill(0))
@@ -109,7 +109,7 @@ describe('Masters of an era', () => {
 
   it('are named after their year in both languages', () => {
     expect(en.masterOf(1850)).toBe('Master of 1850')
-    expect(fr.masterOf(1850)).toBe('Maître de 1850')
+    expect(zh.masterOf(1850)).toBe('1850 年之一代宗師')
   })
 
   it('suspend auto-adjust; a mentor game feeds neither the rank nor auto-adjust', () => {

@@ -31,18 +31,18 @@ function seal(x: CanvasRenderingContext2D, cx: number, cy: number, s: number, de
   x.save()
   x.translate(cx, cy); x.rotate(deg * Math.PI / 180)
   x.fillStyle = '#8A2F22'; x.beginPath(); x.roundRect(-s / 2, -s / 2, s, s, s * 0.16); x.fill()
-  x.fillStyle = '#F9F4EB'; x.font = `${s * 0.6}px 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif`
-  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('柾', 0, s * 0.03)
+  x.fillStyle = '#F9F4EB'; x.font = `${s * 0.6}px 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK TC', 'Noto Serif CJK JP', serif`
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('弈', 0, s * 0.03)
   x.restore()
 }
 
-/** On the mount's lower band (centre line y): the seal 柾 and "Masame" in the title face, right under the image's edge. */
+/** On the mount's lower band (centre line y): the seal 弈 and "弈境" in the title face, right under the image's edge. */
 function sign(x: CanvasRenderingContext2D, m: number, w: number, y: number, u: number) {
   const s = 2.9 * u, fs = 2.6 * u, right = m + w
   seal(x, right - s / 2, y, s, -4)
   x.fillStyle = '#2A2118'; x.textAlign = 'right'; x.textBaseline = 'middle'
   x.font = `italic 500 ${fs}px 'Cormorant Garamond', Georgia, serif`
-  x.fillText('Masame', right - s - 1.2 * u, y)
+  x.fillText('弈境 · GoRealm', right - s - 1.2 * u, y)
 }
 
 /** Splits `text` into lines no wider than `w` in the context's current font. */

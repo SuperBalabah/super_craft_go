@@ -7,7 +7,8 @@ import { rng } from './board/noise'
 import { adjustRank, botProfile, clampEra, clampRank, decide, DEFAULT_RANK, lessonFlags, MASTER_RANK, RANKS, stepEra, stepRank } from './bot'
 import { askFirst, confirmDiscard, openSgfFile, savePngFile, saveSgfFile } from './files'
 import { Game, type GameNode, type Move, type Sign, type Vertex } from './game'
-import { analyze, call, candidates, gtp, inTauri, on, type Analysis, type EngineStatus, type NetState, type Progress } from './katago'
+import { analyze, analyzeDetailed, call, candidates, gtp, inTauri, on, vertex, type Analysis, type CandidateMoveInfo, type EngineStatus, type NetState, type Progress } from './katago'
+import { GoLogo } from './GoLogo'
 import { Networks } from './Networks'
 import { handMove, handWanted, loadHand } from './opponentHand'
 import type { OpponentHand } from './board3d/hand'
@@ -23,6 +24,7 @@ import * as ogs from './ogs'
 import { Sheet } from './Sheet'
 import { Icon } from './Icon'
 import { Timeline } from './Timeline'
+import { WinrateChart } from './WinrateChart'
 import { cardSkin, LOOKS, readyDecors } from './board3d/logic'
 import { noDead, score, suggestDead, toggleDead, type Dead } from './scoring'
 import { loadSgf, MAX_SGF, readResult, resignResult, saveSgf, scoreResult, timeResult } from './sgf'
@@ -88,14 +90,14 @@ interface Settings {
   renderer: Renderer; camera: Board3DOptions['camera']; light: TimeMode; highContrast: boolean; decor: Decor | 'auto'; stones: StoneSet; ambientSound: boolean; depthOfField: boolean; opponentHand: boolean; goban: GobanShape; wood: Wood
   langChosen: boolean; panelHidden: boolean; autoUpdate: boolean; updateChecked: number; autoplay: typeof AUTOPLAY[number]
   handicap: number; clock: ClockSetting
-  style: 'level' | 'era'; era: number; mentor: boolean // a Master of an era instead of the AI level; the mentor (v0.5 B)
+  style: 'level' | 'era' | 'superhuman'; era: number; mentor: boolean; aiVisits: number // superhuman: strongest KataGo; aiVisits: thinking depth
 }
 const SETTINGS_KEY = 'baduk.settings'
 export function loadSettings(): Settings {
   const d: Settings = {
     lang: 'en', opponent: 'ai', ogsSpeed: 'rapid', color: 'b', myRank: DEFAULT_RANK, aiRank: DEFAULT_RANK, autoAdjust: true, botResign: true, delay: true, territory: false,
-    renderer: '3d', camera: 'study', light: 'auto', highContrast: false, decor: 'atelier', stones: 'japonaise', ambientSound: false, depthOfField: true, opponentHand: true, goban: 'table', wood: 'kaya', langChosen: false, panelHidden: false,
-    autoUpdate: true, updateChecked: 0, autoplay: 1, handicap: 0, clock: 'off', style: 'level', era: 1850, mentor: false,
+    renderer: '3d', camera: 'contemplation', light: 'auto', highContrast: false, decor: 'washitsu', stones: 'japonaise', ambientSound: false, depthOfField: true, opponentHand: true, goban: 'table', wood: 'kaya', langChosen: false, panelHidden: false,
+    autoUpdate: true, updateChecked: 0, autoplay: 1, handicap: 0, clock: 'off', style: 'level', era: 1850, mentor: false, aiVisits: 150,
   }
   let j: Partial<Settings> = {}
   try { j = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? '{}') ?? {} } catch { /* private mode or garbage: defaults */ }
@@ -113,7 +115,8 @@ export function loadSettings(): Settings {
     autoplay: AUTOPLAY.includes(s.autoplay) ? s.autoplay : 1, botResign: s.botResign !== false,
     handicap: Number.isInteger(s.handicap) && s.handicap >= 2 && s.handicap <= 9 ? s.handicap : 0,
     clock: typeof s.clock === 'string' && Object.hasOwn(CLOCKS, s.clock) ? s.clock : 'off',
-    style: s.style === 'era' ? 'era' : 'level', era: clampEra(s.era), mentor: s.mentor === true,
+    style: s.style === 'superhuman' ? 'superhuman' : s.style === 'era' ? 'era' : 'level', era: clampEra(s.era), mentor: s.mentor === true,
+    aiVisits: typeof s.aiVisits === 'number' && s.aiVisits > 0 ? s.aiVisits : 150,
   }
 }
 
@@ -210,8 +213,8 @@ function Stepper({ label, value, step, names = [t.stronger(label), t.weaker(labe
   )
 }
 
-/** The AI's name on the card and in the SGF: a Master of an era, else KataGo at its rank. */
-const botName = (b: { rank: string; era?: number }) => (b.era ? t.masterOf(b.era) : t.botName(b.rank))
+/** The AI's name on the card and in the SGF: Superhuman, a Master of an era, else KataGo at its rank. */
+const botName = (b: { rank: string; era?: number; superhuman?: boolean }) => (b.superhuman ? t.superhumanName : b.era ? t.masterOf(b.era) : t.botName(b.rank))
 
 export function App() {
   const [game, setGame] = useState(() => new Game({ size: 19 }))
@@ -269,6 +272,8 @@ export function App() {
   const [engine, setEngine] = useState<EngineStatus>({ state: 'stopped' })
   const [nets, setNets] = useState<NetState | null>(null)
   const [progress, setProgress] = useState<Record<string, Progress>>({})
+  const [liveCandidates, setLiveCandidates] = useState<CandidateMoveInfo[]>([])
+  const [hoveredCandidate, setHoveredCandidate] = useState<CandidateMoveInfo | null>(null)
   // the four doors' sheets (play, learn, games, settings), Share, and 'atelier': Settings scrolled to its Atelier section
   const [sheet, setSheet] = useState<'game' | 'learn' | 'games' | 'settings' | 'atelier' | 'share' | 'nets' | 'kifu' | null>(null)
   // the control a sheet returns focus to (WebKit doesn't focus clicked buttons), kept when one sheet opens another
@@ -624,8 +629,12 @@ export function App() {
     if ((settings.opponent === 'ai' || o.ritual) && canPlayAI) {
       const h = o.handicap ?? settings.handicap // with a handicap the player takes Black, White plays first
       const me: Sign = h || settings.color === 'b' ? 1 : settings.color === 'w' ? -1 : random() < 0.5 ? 1 : -1
-      const b = { sign: -me as Sign, rank: o.rank ?? settings.aiRank, ...o.ritual && { ritual: true as const },
-        ...!o.ritual && settings.style === 'era' && { era: settings.era, rank: MASTER_RANK }, ...!o.ritual && settings.mentor && canAnalyze && { mentor: true as const } }
+      const isSuperhuman = !o.ritual && settings.style === 'superhuman'
+      const b = { sign: -me as Sign, rank: isSuperhuman ? 'superhuman' : (o.rank ?? settings.aiRank),
+        superhuman: isSuperhuman,
+        ...o.ritual && { ritual: true as const },
+        ...!o.ritual && settings.style === 'era' && { era: settings.era, rank: MASTER_RANK },
+        ...!o.ritual && settings.mentor && canAnalyze && { mentor: true as const } }
       const name = botName(b)
       g = new Game({ size, playerBlack: me === 1 ? '' : name, playerWhite: me === 1 ? name : '', ...from,
         ...h > 0 && { komi: 0.5, setup: { black: handicapStones(size, h), white: [] }, firstSign: -1 as Sign } })
@@ -936,8 +945,15 @@ export function App() {
     setBotError(null)
     const ask = async (attempt = 1): Promise<Analysis> => {
       try {
+        if (bot.superhuman) {
+          return await analyze(game, {
+            maxVisits: settings.aiVisits || 150,
+            includePolicy: true,
+            includeOwnership: true,
+          })
+        }
         return await analyze(game, {
-          maxVisits: BOT_VISITS, includePolicy: true, includeOwnership: true,
+          maxVisits: settings.aiVisits || BOT_VISITS, includePolicy: true, includeOwnership: true,
           overrideSettings: { humanSLProfile: botProfile(bot), ignorePreRootHistory: false },
         })
       } catch (e) {
@@ -950,17 +966,29 @@ export function App() {
     // with the mentor, the player's last move is examined first (1 s at most): a costly one stops the game there
     mt.check(game).then(loss => (!live ? null : loss === null ? ask() : (mt.stop(game, loss), null))).then(async a => {
       if (!live || !a) return
-      if (!a.humanPolicy) throw new LocalizedError(d => d.humanSilent)
       const n = game.info.size, botWinrate = bot.sign === 1 ? a.winrate : 1 - a.winrate
       const history = game.moves.slice(0, game.cursor).flatMap(m => winrates.current.get(m) ?? []) // the bot's moves on this line
-      const m = decide({
-        humanPolicy: a.humanPolicy, topMove: a.topMove, botWinrate, history, ownership: a.ownership,
-        mayResign: settings.botResign, signMap: game.board.signMap, opponentPassed: !!game.lastMove && !game.lastMove.vertex, moveNumber: game.moveNumber(),
-        legal: i => game.isLegal([i % n, Math.floor(i / n)]),
-      }, random)
-      if (m.kind === 'resign') return finish(d => d.resigns(bot.sign), false, resignResult(-bot.sign as Sign))
-      const wait = settings.delay ? m.delay - (performance.now() - t0) : 0
-      const v: Vertex | null = m.kind === 'play' ? [m.index % n, Math.floor(m.index / n)] : null
+      let chosenMoveIndex: number | null = null
+      let delayMs = 600
+      if (bot.superhuman) {
+        if (a.topMove && a.topMove.toLowerCase() !== 'pass') {
+          const v = vertex(a.topMove, n)
+          if (v && game.isLegal(v)) chosenMoveIndex = v[1] * n + v[0]
+        }
+        delayMs = settings.delay ? 600 : 0
+      } else {
+        if (!a.humanPolicy) throw new LocalizedError(d => d.humanSilent)
+        const m = decide({
+          humanPolicy: a.humanPolicy, topMove: a.topMove, botWinrate, history, ownership: a.ownership,
+          mayResign: settings.botResign, signMap: game.board.signMap, opponentPassed: !!game.lastMove && !game.lastMove.vertex, moveNumber: game.moveNumber(),
+          legal: i => game.isLegal([i % n, Math.floor(i / n)]),
+        }, random)
+        if (m.kind === 'resign') return finish(d => d.resigns(bot.sign), false, resignResult(-bot.sign as Sign))
+        chosenMoveIndex = m.kind === 'play' ? m.index : null
+        delayMs = settings.delay ? m.delay - (performance.now() - t0) : 0
+      }
+      const wait = delayMs
+      const v: Vertex | null = chosenMoveIndex !== null ? [chosenMoveIndex % n, Math.floor(chosenMoveIndex / n)] : null
       // the opponent's hand plays White's stones from the bowl across the board (Black's sits by the player); the stone
       // lands when it would have without it, or a little later on a quick move. Thinking time off: the player chose speed.
       const h = handRef.current
@@ -1090,6 +1118,33 @@ export function App() {
     return () => { live = false }
   }, [an, canAnalyze, shown.board, shown.toPlay]) // eslint-disable-line react-hooks/exhaustive-deps
   const cands = anRead ? candidates(anRead.a, shown.toPlay) : null
+
+  // 復盤實時「邊看邊算」：復盤或打譜研究時，隨手數自動即時深化運算推薦選點與變化圖
+  useEffect(() => {
+    if (!canAnalyze || ongoing || botTurn || countingNow) {
+      setLiveCandidates([])
+      setHoveredCandidate(null)
+      return
+    }
+    if (!review && !browsing) {
+      setLiveCandidates([])
+      setHoveredCandidate(null)
+      return
+    }
+    let live = true
+    const g = shown
+    const timer = setTimeout(() => {
+      analyzeDetailed(g, { maxVisits: settings.aiVisits || 150 })
+        .then(res => {
+          if (live) setLiveCandidates(res.candidates)
+        })
+        .catch(() => {})
+    }, 120)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [shown.board, shown.cursor, shown.toPlay, canAnalyze, ongoing, botTurn, countingNow, settings.aiVisits, review, browsing])
   // a caption link remounts the caption (keyed by its text): right after one is activated, focus the link with the same
   // action if it came back, else the caption itself, so a second Enter never changes step, moment or leaves the review
   const refocus = useRef<string | null>(null)
@@ -1248,6 +1303,12 @@ export function App() {
     ? [{ at: i + 1, cat: j.cat, label: t.catHead(game.moveNumber(i) + 1, t.cats[j.cat], shownLoss(j)) }] : [])) : undefined
   const board = shown.board, toPlay = shown.toPlay, last = shown.lastMove
   const shownOwn = settings.territory && own?.game === game && !ongoing ? own : null
+  const liveEstimate = useMemo(() => {
+    if (!shownOwn?.data) return null
+    const dead = suggestDead(board.signMap, shownOwn.data, 0.45)
+    const scored = score(board.signMap, dead, { black: board.getCaptures(1), white: board.getCaptures(-1) }, komi, shownOwn.data)
+    return { dead, scored }
+  }, [shownOwn, board, komi])
   const ghost = mt.stopped && !tr.open && last?.vertex ? { v: last.vertex, sign: last.sign } : null // the stopped move, in half-tone
   const engineWait = engine.state === 'tuning' ? t.tuningCaption
     : (thinking || reading || an) && engine.state === 'starting' ? t.engineStarting
@@ -1442,22 +1503,29 @@ export function App() {
           options={{ camera: settings.camera, time: settings.light, highContrast: settings.highContrast, decor, stones: stonesOn, dof: settings.depthOfField, patina: heirloom, goban: settings.goban, wood: settings.wood }}
           thinking={thinking}
           // while the engine starts (OpenCL tuning loads the GPU) a slow verdict is not the hardware's: this session only
-          onFallback={r => { if (r === 'context-lost' || (r === 'slow' && (engineBusy || reading))) setSession2d(true); else set('renderer', '2d'); setNote(d => d.fellBack) }}
+          onFallback={r => { if (r === 'context-lost' || r === 'webgl2' || (r === 'slow' && (engineBusy || reading))) { setSession2d(true); setNote(d => d.fellBack) } }}
           state={{
             signMap: ghost ? board.signMap.map((r, y) => r.map((c, x) => (x === ghost.v[0] && y === ghost.v[1] ? 0 : c))) : board.signMap,
             last: ghost ? null : last?.vertex ?? null, pending: ghost, toPlay, coords, sound,
             interactive: removal ? true : countingNow ? !result : review ? lessonPlayable : !game.ended && !locked && humanTurn,
             // ② and ③: what changed hands, until the player explores
-            ownership: countingNow ? null : review ? (m && !review.explored ? review.step === 'punish' ? m.lost : review.step === 'better' ? m.kept : null : null)
-              : shownOwn?.data ?? null,
+            ownership: (countingNow || liveEstimate) ? null : review ? (m && !review.explored ? review.step === 'punish' ? m.lost : review.step === 'better' ? m.kept : null : null)
+              : null,
             counting: final ? { dead: countingNow!.dead, territory: final.territory }
-              : removal ? { dead: ogs.deadOf(board.signMap, removal.removed), territory: board.signMap.map(r => r.map(() => 0 as Sign)) } : null, // OGS scores
+              : removal ? { dead: ogs.deadOf(board.signMap, removal.removed), territory: board.signMap.map(r => r.map(() => 0 as Sign)) }
+              : liveEstimate ? { dead: liveEstimate.dead, territory: liveEstimate.scored.territory } : null,
             captures: { black: board.getCaptures(1), white: board.getCaptures(-1) }, // the 3D lids: prisoners taken by each
             lastCat: jm?.cat,
             // KataGo's line from the position before the judged move, in numbered ghost stones; the played move crossed
             ...(pvMarks && { signMap: game.boards[judgedAt].signMap, last: null, marks: pvMarks }),
             ...tr.board,
-            ...(cands && { marks: cands.flatMap(c => c.v ? [{ v: c.v, label: c.label, tone: tone(c.loss) }] : []) }),
+            ...(hoveredCandidate?.pv?.length ? {
+              marks: hoveredCandidate.pv.flatMap((pvV, idx) => pvV ? [{ v: pvV, label: String(idx + 1), tone: (idx % 2 ? -shown.toPlay : shown.toPlay) === 1 ? 'black' as const : 'white' as const }] : [])
+            } : liveCandidates.length > 0 && !cands ? {
+              marks: liveCandidates.flatMap(c => c.v ? [{ v: c.v, label: c.label, tone: c.rank === 1 ? 'best' as const : 'ok' as const }] : [])
+            } : cands ? {
+              marks: cands.flatMap(c => c.v ? [{ v: c.v, label: c.label, tone: tone(c.loss) }] : [])
+            } : {}),
           }}
           onPlay={play}
           inert={isMobile && sheet !== null}
@@ -1481,8 +1549,10 @@ export function App() {
         <aside className={`card${panelHidden ? ' off' : ''}`}>
           <header className="brand">
             {!panelHidden && <>
-              <span className="seal" aria-hidden="true">柾</span>
-              <h1>Masame</h1>
+              <div className="brand-wrap">
+                <GoLogo size={28} />
+                <h1>弈境<span className="brand-en">GoRealm</span></h1>
+              </div>
               {/* display: contents on the desktop; the tab bar on phones, where the open sheet's door is the current tab */}
               <nav className="doors">
                 {([['game', 'play', 'plus', null], ['learn', 'learn', 'book', 'D'], ['games', 'games', 'library', 'B'], ['settings', 'settings', 'adjustments', null]] as const).map(([s, d, icon, key]) => {
@@ -1514,6 +1584,13 @@ export function App() {
               {isMobile ? <button className="icon sm cands" aria-pressed={held} onClick={() => setHeld(v => !v)} aria-label={t.candidates} title={t.candidates}><Icon name="target" /></button> : <>
                 <button className="icon sm" aria-pressed={renderer === '3d'} onClick={() => { setSession2d(false); set('renderer', renderer === '3d' ? '2d' : '3d') }}
                   aria-label={t.renderToggle} title={renderer === '3d' ? t.render3d : t.render2d}><Icon name={renderer === '3d' ? 'cube' : 'square'} /></button>
+                {renderer === '3d' && (
+                  <button className="icon sm view-toggle" onClick={() => set('camera', settings.camera === 'study' ? 'contemplation' : 'study')}
+                    aria-label={settings.camera === 'study' ? '切換至 3D 沉浸視角 (V)' : '切換至俯視視角 (V)'}
+                    title={settings.camera === 'study' ? '切換至 3D 沉浸視角 (V)' : '切換至俯視視角 (V)'}>
+                    <Icon name={settings.camera === 'study' ? 'eye' : 'view-3d'} />
+                  </button>
+                )}
                 <button className="icon sm" onClick={openSheet('atelier')} aria-label={t.atelier} title={t.atelier}><Icon name="view" /></button>
               </>}
             </div>
@@ -1589,11 +1666,126 @@ export function App() {
                 )
               })}
               {!review && cta}
+              <WinrateChart
+                game={shown}
+                cursor={shown.cursor}
+                judged={judgedAll}
+                pos={scan.current?.pos}
+                go={goTo}
+                onReview={() => startReview(mine)}
+                canReview={canReview}
+                reading={reading}
+                pct={review?.pct}
+              />
               <Timeline g={shown} floor={floor} go={goTo} auto={!!auto} toggleAuto={toggleAuto} live={live} relocate={relocate} ticks={ticks} />
               {settings.territory && !review && !ongoing && (
-                <p className="estimate" aria-live="polite">
-                  {!inTauri() || !canAnalyze ? t.territoryNeedsNet : shownOwn ? t.estimate(shownOwn.score) : t.estimating}
-                </p>
+                liveEstimate ? (
+                  <div className="fox-territory-hud" aria-live="polite">
+                    <div className="hud-title-bar">
+                      <span className="hud-title">⚑ 棋勢分析結果</span>
+                      <button className="hud-close" onClick={() => set('territory', false)} title="關閉 (T)">×</button>
+                    </div>
+                    <div className="hud-columns">
+                      <div className="hud-col black">
+                        <div className="hud-col-header">
+                          <span className="fox-stone-icon b" />
+                          <span>黑方</span>
+                        </div>
+                        <div className="hud-data-row">
+                          <span className="hud-data-label">確定地</span>
+                          <span className="hud-solid-val">{liveEstimate.scored.black.territory}</span>
+                        </div>
+                        <div className="hud-data-row">
+                          <span className="hud-data-label">提子</span>
+                          <span className="hud-data-val">{liveEstimate.scored.black.prisoners} 目</span>
+                        </div>
+                        <div className="hud-total-row">
+                          <span className="hud-total-label">合計</span>
+                          <span className="hud-total-num">{liveEstimate.scored.black.total.toFixed(1)} 目</span>
+                        </div>
+                      </div>
+                      <div className="hud-col white">
+                        <div className="hud-col-header">
+                          <span className="fox-stone-icon w" />
+                          <span>白方</span>
+                        </div>
+                        <div className="hud-data-row">
+                          <span className="hud-data-label">確定地</span>
+                          <span className="hud-solid-val">{liveEstimate.scored.white.territory}</span>
+                        </div>
+                        <div className="hud-data-row">
+                          <span className="hud-data-label">提子＋貼目</span>
+                          <span className="hud-data-val">{liveEstimate.scored.white.prisoners} ＋ {komi} 目</span>
+                        </div>
+                        <div className="hud-total-row">
+                          <span className="hud-total-label">合計</span>
+                          <span className="hud-total-num">{liveEstimate.scored.white.total.toFixed(1)} 目</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="hud-verdict-box">
+                      <span className="hud-verdict-text">
+                        綜合判定：<strong>{
+                          typeof shownOwn?.score === 'number'
+                            ? shownOwn.score === 0
+                              ? '雙方細棋均勢'
+                              : shownOwn.score > 0
+                                ? `黑棋盤面領先 ${shownOwn.score.toFixed(1)} 目`
+                                : `白棋盤面領先 ${Math.abs(shownOwn.score).toFixed(1)} 目`
+                            : liveEstimate.scored.lead === 0
+                              ? '雙方細棋均勢'
+                              : `${liveEstimate.scored.lead > 0 ? '黑棋' : '白棋'} 領先 ${Math.abs(liveEstimate.scored.lead).toFixed(1)} 目`
+                        }</strong>
+                      </span>
+                    </div>
+                    <div className="hud-disclaimer">分析的結果只提供參考。</div>
+                  </div>
+                ) : (
+                  <div className="fox-territory-hud loading" aria-live="polite">
+                    {!inTauri() || !canAnalyze ? t.territoryNeedsNet : t.estimating}
+                  </div>
+                )
+              )}
+              {review && liveCandidates.length > 0 && (
+                <div className="live-cands-card">
+                  <div className="live-cands-header">
+                    <span className="live-cands-title">
+                      <i className="live-cands-pulse" />
+                      {t.livePonderingTitle}
+                    </span>
+                    <small style={{ color: '#64748b' }}>{shown.toPlay === 1 ? '黑下' : '白下'}</small>
+                  </div>
+                  <div className="live-cands-list">
+                    {liveCandidates.map(c => (
+                      <div
+                        key={c.gtpCoord}
+                        className="live-cand-item"
+                        onMouseEnter={() => setHoveredCandidate(c)}
+                        onMouseLeave={() => setHoveredCandidate(null)}
+                        onClick={() => {
+                          if (c.v && game.isLegal(c.v)) {
+                            play(c.v)
+                          }
+                        }}
+                        title="點擊落子試下，懸停預覽變化圖"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span className={`live-cand-rank ${c.rank <= 3 ? `rank-${c.rank}` : 'rank-other'}`}>
+                            {c.rank}
+                          </span>
+                          <strong className="live-cand-coord">{c.gtpCoord}</strong>
+                        </div>
+                        <div className="live-cand-stats">
+                          <span className="live-cand-winrate">{c.winrate.toFixed(1)}%</span>
+                          <span className="live-cand-lead" style={{ color: c.scoreLead >= 0 ? '#4ade80' : '#f87171' }}>
+                            {c.scoreLead >= 0 ? `+${c.scoreLead.toFixed(1)}` : c.scoreLead.toFixed(1)}目
+                          </span>
+                          <span className="live-cand-visits">{c.visits}v</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}</>}
             </div>
             <div className="acts">
@@ -1643,15 +1835,21 @@ export function App() {
                 {/* the style first: a Master of an era takes the AI level's place, and sets the handicap below */}
                 <div className="field">
                   <span>{t.style}</span>
-                  <Seg label={t.style} value={settings.style} options={[['level', t.styleLevel], ['era', t.styleEra]]} set={v => propose({ style: v })} />
+                  <Seg label={t.style} value={settings.style} options={[['level', t.styleLevel], ['era', t.styleEra], ['superhuman', t.styleSuperhuman]]} set={v => propose({ style: v })} />
                 </div>
-                {master ? <>
+                {settings.style === 'superhuman' ? (
+                  <p className="say">{t.superhumanDesc}</p>
+                ) : master ? <>
                   <Stepper label={t.era} value={String(settings.era)} step={d => set('era', stepEra(settings.era, -d))} names={[t.earlier, t.later]} />
                   <p className="say">{t.eraHelp}</p>
                 </> : <Stepper label={t.aiLevel} value={settings.aiRank} step={d => propose({ aiRank: stepRank(settings.aiRank, d) })} />}
                 <Stepper label={t.handicap} value={t.handicapStones(settings.handicap)} step={d => set('handicap', stepHandicap(settings.handicap, -d))} names={[t.fewerStones, t.moreStones]} />
                 {settings.handicap > 0 && settings.handicap === proposeHandicap(settings.myRank, master ? MASTER_RANK : settings.aiRank, nextSize)
                   && <p className={master ? 'say' : 'quiet'}>{master ? t.eraHandicap(settings.handicap) : t.handicapProposed}</p>}
+                <div className="field">
+                  <span>{t.aiThinkingTime}</span>
+                  <Seg label={t.aiThinkingTime} value={settings.aiVisits || 150} options={[[50, '50 (快速)'], [150, '150 (標準)'], [400, '400 (深度)'], [1000, '1000 (極限)']]} set={v => set('aiVisits', v)} />
+                </div>
                 <details className="more">
                   <summary>{t.aiSettings}</summary>
                   <Stepper label={t.myLevel} value={settings.myRank} step={d => { const v = stepRank(settings.myRank, d); propose({ myRank: v, aiRank: v }) }} />
@@ -1752,7 +1950,7 @@ export function App() {
             {!isMac && !isMobile && inTauri() && <Switch label={t.fullscreen} k="F11" on={fullscreen} toggle={() => setFullscreen(!fullscreen)} />}
             <div className="row" style={{ cursor: 'default', gap: 16 }}>
               <span>{t.language}</span>
-              <Seg label={t.language} value={settings.lang} options={[['fr', 'Français'], ['en', 'English']]} set={v => { setLang(v); setSettings(s => ({ ...s, lang: v, langChosen: true })) }} />
+              <Seg label={t.language} value={settings.lang} options={[['zh', '繁體中文'], ['en', 'English']]} set={v => { setLang(v); setSettings(s => ({ ...s, lang: v, langChosen: true })) }} />
             </div>
             <div className="row" style={{ cursor: 'default' }}>
               <span>{t.engine}</span>

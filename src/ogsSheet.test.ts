@@ -11,7 +11,7 @@ import type { ActiveRow } from './ogs'
 const nb = (s: string) => s.replace(/ /g, ' ')
 
 describe('OGS sheet helpers', () => {
-  afterEach(() => setLang('fr'))
+  afterEach(() => setLang('zh'))
   it('falls back to Play for a stored tab that no longer exists', () => {
     const st = (v: string | null) => ({ getItem: () => v })
     expect([storedTab(st('watch')), storedTab(st('games')), storedTab(st(null)), storedTab(st('junk'))]).toEqual(['watch', 'play', 'play', 'play'])
@@ -23,9 +23,9 @@ describe('OGS sheet helpers', () => {
     expect(rows.sort(activeOrder).map(r => r.id)).toEqual([5, 2, 3, 4, 1])
   })
   it('tells the time left in days, hours or minutes, without breaking lines', () => {
-    setLang('fr')
+    setLang('en')
     const H = 3600_000
-    expect([timeLeft(52 * H + 60_000), timeLeft(5 * H + 1), timeLeft(40 * 60_000 + 5), timeLeft(-1)].map(nb)).toEqual(['2 j 4 h', '5 h', '40 min', '0 min'])
+    expect([timeLeft(52 * H + 60_000), timeLeft(5 * H + 1), timeLeft(40 * 60_000 + 5), timeLeft(-1)].map(nb)).toEqual(['2 d 4 h', '5 h', '40 min', '0 min'])
     expect(timeLeft(5 * H)).not.toMatch(/ /)
   })
   it('puts 2 to 4 rank lines inside the domain', () => {
@@ -35,11 +35,9 @@ describe('OGS sheet helpers', () => {
     expect(wide.ticks.length).toBeGreaterThanOrEqual(2)
     expect(wide.ticks.length).toBeLessThanOrEqual(4)
   })
-  it('French OGS sheet strings: nbsp before colons, no « IA »', () => {
-    setLang('fr')
-    for (const s of [t.ogsChallengeHint, t.ogsChartLabel('8k', '3k', 14)]) expect(s).not.toMatch(/ [:;!?]/)
-    expect(nb(t.ogsChartLabel('8k', '3k', 14))).toBe('Classement OGS : de 8k à 3k en 14 mois')
-    for (const s of [...Object.values(t.ogsTabs), t.ogsChallengeTitle, t.ogsAutoHandicap, t.ogsNoRanked, t.ogsLiveNow]) expect(s).not.toMatch(/\bIA\b/)
+  it('Chinese and English OGS sheet strings', () => {
+    setLang('zh')
+    expect(t.ogsChartLabel('8k', '3k', 14)).toBe('OGS 段位變化：在 14 個月中由 8k 變動至 3k')
     setLang('en')
     expect(t.ogsChartLabel('8k', '3k', 14)).toBe('OGS rank: from 8k to 3k over 14 months')
   })
@@ -67,18 +65,17 @@ describe('Mes parties', () => {
   it('searches the opponent only, both sides when the colour is unknown', () => {
     const ids = (q: string) => filtered(xs, 'all', q).map(x => x.id)
     expect(ids('shu')).toEqual(['2'])
-    expect(ids('MOI')).toEqual([]) // the player's own name is not an opponent
+    expect(ids('MOI')).toEqual([])
     expect(ids('bob')).toEqual(['3'])
     expect(ids('  dosaku ')).toEqual(['4'])
     expect(filtered(xs, 'ai', 'shu')).toEqual([])
   })
   it('names the AI in the language shown', () => {
     setLang('en')
-    const master = { ...e('6', 'ai', 1, 'Moi', 'Maître de 1850', 'W+R'), era: 1850 }, bot = e('7', 'ai', -1, 'KataGo humain 3k', 'Moi')
+    const master = { ...e('6', 'ai', 1, 'Moi', 'Master of 1850', 'W+R'), era: 1850 }, bot = e('7', 'ai', -1, 'KataGo human 3k', 'Moi')
     bot.black.rank = '3k'
     expect(filtered([master, bot], 'all', 'master of').map(x => x.id)).toEqual(['6'])
     expect(filtered([master, bot], 'all', 'human 3k').map(x => x.id)).toEqual(['7'])
-    setLang('fr')
   })
   it('offers only the finished OGS games not kept yet', () => {
     const g = (id: number) => ({ id, size: 19, opponent: { id, username: 'x', rank: '' }, color: 1 as const, date: 0 })
@@ -95,7 +92,7 @@ describe('Mes parties', () => {
     setLang('en')
     expect(xs.map(outcome)).toEqual(['Won · B+R', 'Lost · B+4.5', 'Draw', 'Unfinished', 'Unfinished'])
     expect(outcome({ ...xs[2], result: 'W+R' })).toBe('W+R')
-    setLang('fr')
-    expect(xs.slice(0, 2).map(outcome)).toEqual(['Gagnée · N+R', 'Perdue · N+4,5'])
+    setLang('zh')
+    expect(xs.slice(0, 2).map(outcome)).toEqual(['勝 · B+R', '負 · B+4.5'])
   })
 })

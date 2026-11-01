@@ -662,10 +662,10 @@ export class Board3D {
     this.ao.count = 0; this.ao.frustumCulled = false; this.ao.renderOrder = 1; this.ao.position.y = 0.06
     scene.add(this.ao)
 
-    // counting: small slate / shell tiles on counted points
-    const tile = new THREE.BoxGeometry(7, 1.2, 7)
-    const tileMat = (c: number, rough: number) => new THREE.MeshPhysicalMaterial({ color: c, roughness: rough, clearcoat: 0.3 })
-    this.terr = { 1: new THREE.InstancedMesh(tile, tileMat(0x1c1c20, 0.5), 361), [-1]: new THREE.InstancedMesh(tile, tileMat(0xf2ede2, 0.35), 361) }
+    // counting: small slate / shell tiles on counted points (solid black and crisp white tiles)
+    const tile = new THREE.BoxGeometry(8, 1.4, 8)
+    const tileMat = (c: number, rough: number) => new THREE.MeshPhysicalMaterial({ color: c, roughness: rough, clearcoat: 0.4 })
+    this.terr = { 1: new THREE.InstancedMesh(tile, tileMat(0x0a0a0c, 0.2), 361), [-1]: new THREE.InstancedMesh(tile, tileMat(0xffffff, 0.1), 361) }
     for (const m of Object.values(this.terr)) { m.count = 0; m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m) }
 
     // hover ghost + last-move marker
@@ -1675,7 +1675,7 @@ export class Board3D {
     // three samples the sky at azimuth + rotation: this brings the sky's bright side round to the key's (Lanterne: the lamp's) bearing
     this.scene.environmentRotation.y = L.skyAz - az
     this.renderer.toneMappingExposure = tod.exp * L.exp
-    this.spot.intensity = 5.5 * ok; this.spot.color.copy(kelvin(lerp(tod.K, 3600, 0.5)))
+    this.spot.intensity = 0; // 完全關閉模糊投影射燈，杜絕奇怪光影光斑
     // Study damps reflections for readability; high contrast darkens the wood a little and calms the shell
     const c = ce, hc = this.hcK
     // the room: Study keeps the app's linen; Contemplation clears to a warm dark room, darker in the evening
