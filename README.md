@@ -53,28 +53,37 @@ Designed for serious Go players and connoisseurs, GoRealm features authentic Jap
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start & Installation
 
-### Mode A: Web Browser Instant Play (Zero Install)
-Experience the 3D Goban directly in your browser:
+### Option 1: Desktop Application with Full GPU AI (Recommended)
+Download the standalone, pre-configured desktop package with zero runtime dependencies (no Node.js or Python required):
 
-* **English Version (for Global & US Reviewers)**: `https://superbalabah.github.io/super_craft_go/?lang=en`
-* **Traditional Chinese Version (Default)**: `https://superbalabah.github.io/super_craft_go/`
+1. **Download Release**: Grab the latest [`Super-Craft-Go-v1.0.0-Windows-x64.zip`](https://github.com/SuperBalabah/super_craft_go/releases/latest) from GitHub Releases.
+2. **Extract**: Unzip the package to any folder on your workstation.
+3. **One-Click Setup**: Double-click `Install_Desktop_Shortcut.bat` to instantly generate the **Super Craft Go** application icon on your Windows desktop.
+4. **Launch**: Double-click the desktop icon to immerse in the 3D atelier with full GPU KataGo neural network acceleration out-of-the-box!
+
+*(Or directly double-click `Super Craft Go.exe` inside the unzipped folder for portable play)*
 
 ---
 
-### Mode B: Local Desktop Setup with Full KataGo GPU Acceleration
-1. Verify Node.js (>= 18) and Python 3 are installed on your workstation.
-2. Launch the asynchronous KataGo bridge daemon:
-   ```bash
-   python craft_go/bridge.py
-   ```
-3. Start the Vite development frontend:
-   ```bash
-   npm install
-   npm run dev
-   ```
-4. Open `http://localhost:1420` in any modern WebGL2-compatible browser.
+### Option 2: Web Browser Instant Preview (Zero Install)
+Experience the tactile 3D Kaya wood goban, physics acoustics, and SGF studio immediately in your web browser without downloading:
+
+* 🌐 **English Preview (for US Admissions & Global Reviewers)**: [https://superbalabah.github.io/super_craft_go/?lang=en](https://superbalabah.github.io/super_craft_go/?lang=en)
+* 🌐 **Traditional Chinese Version (Default)**: [https://superbalabah.github.io/super_craft_go/](https://superbalabah.github.io/super_craft_go/)
+
+---
+
+### Option 3: For Developers & Contributors (Building from Source)
+If you wish to inspect or modify the source code:
+```bash
+git clone https://github.com/SuperBalabah/super_craft_go.git
+cd super_craft_go
+npm install
+npm run build
+python craft_go/bridge.py
+```
 
 ---
 

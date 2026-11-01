@@ -47,28 +47,37 @@
 
 ---
 
-## 🚀 快速上手 (Quick Start)
+## 🚀 快速安裝與使用指南 (Quick Start)
 
-### 方式 A：線上免安裝預覽（最簡單）
-直接造訪 GitHub Pages 網址即可立刻體驗 3D 棋盤與內建 AI 對弈：
+### 方式一：下載官方桌面安裝包（最推薦 · 滿血 GPU AI）
+無需安裝 Node.js、Vite 或 Python，開箱即用：
 
-* **繁體中文版（預設）**：`https://superbalabah.github.io/super_craft_go/`
-* **英文版 (Global & US Reviewers)**：`https://superbalabah.github.io/super_craft_go/?lang=en`
+1. **下載安裝包**：前往 GitHub Releases 下載最新版 [`Super-Craft-Go-v1.0.0-Windows-x64.zip`](https://github.com/SuperBalabah/super_craft_go/releases/latest)。
+2. **解壓縮**：將壓縮包解壓至您電腦的任意資料夾。
+3. **一鍵建立桌面捷徑**：雙擊資料夾內的 `Install_Desktop_Shortcut.bat`，系統將自動為您在 Windows 桌面建立帶有日式禪意圍棋圖標的專屬捷徑。
+4. **啟動對局**：雙擊桌面上的「Super Craft Go」圖標，背景即刻自動喚起 GPU 加速之 KataGo 滿血引擎並打開 3D 棋盤工坊！
+
+*(亦可直接雙擊資料夾內的 `Super Craft Go.exe` 綠色便攜運行)*
 
 ---
 
-### 方式 B：本地端啟動並串接 GPU KataGo
-1. 確保本機已安裝 Node.js 與 Python 3。
-2. 啟動非同步中繼服務：
-   ```bash
-   python craft_go/bridge.py
-   ```
-3. 進入本目錄啟動 Vite 服務：
-   ```bash
-   npm install
-   npm run dev
-   ```
-4. 在瀏覽器打開 `http://localhost:1420` 即可開始對弈！
+### 方式二：線上免安裝預覽 (Web Instant Preview)
+適合快速預覽 3D 榧木紋理、物理落子音效、和室光影切換與 SGF 打譜（無須下載任何檔案）：
+
+* 🌐 **英文版 (Global & US Reviewers)**：[https://superbalabah.github.io/super_craft_go/?lang=en](https://superbalabah.github.io/super_craft_go/?lang=en)
+* 🌐 **繁體中文版（預設）**：[https://superbalabah.github.io/super_craft_go/](https://superbalabah.github.io/super_craft_go/)
+
+---
+
+### 方式三：開發者原始碼編譯 (Building from Source)
+若您希望深入檢視或修改原始碼：
+```bash
+git clone https://github.com/SuperBalabah/super_craft_go.git
+cd super_craft_go
+npm install
+npm run build
+python craft_go/bridge.py
+```
 
 ---
 
